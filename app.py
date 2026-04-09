@@ -1,11 +1,7 @@
 import streamlit as st
-import google.generativeai as genai
+import requests
 
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-model = genai.GenerativeModel("gemini-2.0-flash")
-
-HOSPITAL_INFO = """
-You are an AI assistant for Udayananda Hospitals, Nandyal.
+HOSPITAL_INFO = """You are an AI assistant for Udayananda Hospitals, Nandyal.
 
 HOSPITAL INFORMATION:
 - Name: Udayananda Hospitals
@@ -41,13 +37,6 @@ st.set_page_config(
     layout="centered"
 )
 
-st.markdown("""
-<style>
-.main { background-color: #f0f8ff; }
-.stApp { background: linear-gradient(135deg, #667eea20, #764ba220); }
-</style>
-""", unsafe_allow_html=True)
-
 col1, col2 = st.columns([1, 4])
 with col1:
     st.markdown("# 🏥")
@@ -75,14 +64,26 @@ if prompt := st.chat_input("Type your question here... (English or Telugu)"):
 
     with st.chat_message("assistant"):
         with st.spinner("..."):
-            conversation = HOSPITAL_INFO + "\n\nConversation:\n"
+            messages = [{"role": "system", "content": HOSPITAL_INFO}]
             for msg in st.session_state.messages:
-                role = "Patient" if msg["role"] == "user" else "Assistant"
-                conversation += f"{role}: {msg['content']}\n"
-            conversation += "Assistant:"
+                messages.append({
+                    "role": msg["role"],
+                    "content": msg["content"]
+                })
 
-            response = model.generate_content(conversation)
-            reply = response.text
+            response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {st.secrets['OPENROUTER_API_KEY']}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "mistralai/mistral-7b-instruct:free",
+                    "messages": messages
+                }
+            )
+
+            reply = response.json()["choices"][0]["message"]["content"]
             st.write(reply)
             st.session_state.messages.append({
                 "role": "assistant",
