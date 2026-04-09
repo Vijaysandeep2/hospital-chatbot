@@ -78,12 +78,16 @@ if prompt := st.chat_input("Type your question here... (English or Telugu)"):
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "mistralai/mistral-7b-instruct:free",
+                    "model": "meta-llama/llama-3.2-3b-instruct:free",
                     "messages": messages
                 }
             )
-
-            reply = response.json()["choices"][0]["message"]["content"]
+data = response.json()
+if "choices" in data:
+    reply = data["choices"][0]["message"]["content"]
+else:
+    reply = "Sorry, I'm having trouble connecting. Please call us at 08514222999 for assistance."
+        
             st.write(reply)
             st.session_state.messages.append({
                 "role": "assistant",
