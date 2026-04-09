@@ -2,40 +2,29 @@ import streamlit as st
 import requests
 
 HOSPITAL_INFO = """You are an AI assistant for Udayananda Hospitals, Nandyal.
-
-HOSPITAL INFORMATION:
 - Name: Udayananda Hospitals
-- Location: Collector Office Road, Opp. Railway Station South Gate, Nandyal
+- Location: Collector Office Road, Nandyal
 - Phone: 08514222999, 09144467444
 - Timings: Open 24 hours, 7 days a week
 - Type: 250 bed multispecialty tertiary care hospital
 - Ambulance: 24/7 available
-
-DEPARTMENTS: Cardiology, Neurology, Orthopedics, Pediatrics, Gynecology, General Surgery, ICU, Emergency, Radiology, Pathology, Physiotherapy, Dermatology
-
-INSTRUCTIONS:
+- Departments: Cardiology, Neurology, Orthopedics, Pediatrics, Gynecology, Surgery, ICU, Emergency, Radiology
 - Answer in English or Telugu based on patient language
-- Be helpful, warm and professional
 - For emergencies always provide: 08514222999
 """
 
 st.set_page_config(page_title="Udayananda Hospitals", page_icon="🏥")
-
 col1, col2 = st.columns([1, 4])
 with col1:
     st.markdown("# 🏥")
 with col2:
     st.title("Udayananda Hospitals")
     st.caption("AI Patient Assistant — Available 24/7")
-
 st.divider()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": "నమస్కారం! Welcome to Udayananda Hospitals Nandyal! 🏥\n\nI can help you with:\n- 📅 Appointment bookings\n- 🏥 Department information\n- ⏰ Doctor timings\n- 🚑 Emergency contacts\n- 📍 Location & directions\n\nHow can I assist you today?"
-    })
+    st.session_state.messages.append({"role": "assistant", "content": "నమస్కారం! Welcome to Udayananda Hospitals! 🏥\n\nI can help with appointments, departments, timings, and emergencies.\n\nHow can I assist you?"})
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -52,20 +41,13 @@ if prompt := st.chat_input("Type your question... (English or Telugu)"):
                 messages.append({"role": msg["role"], "content": msg["content"]})
             try:
                 response = requests.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {st.secrets['OPENROUTER_API_KEY']}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": "meta-llama/llama-3.2-3b-instruct:free",
-                        "messages": messages
-                    }
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {st.secrets['GROQ_API_KEY']}", "Content-Type": "application/json"},
+                    json={"model": "llama3-8b-8192", "messages": messages}
                 )
-                data = response.json()
-                reply = data["choices"][0]["message"]["content"]
-            except Exception as e:
-                reply = "Sorry, please call us at 08514222999 for assistance."
+                reply = response.json()["choices"][0]["message"]["content"]
+            except:
+                reply = "Sorry, please call 08514222999 for assistance."
             st.write(reply)
             st.session_state.messages.append({"role": "assistant", "content": reply})
 
